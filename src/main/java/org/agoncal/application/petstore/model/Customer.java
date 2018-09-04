@@ -266,11 +266,6 @@ public class Customer implements Serializable
       this.lastName = lastName;
    }
 
-   public String getFullName()
-   {
-      return firstName + " " + lastName;
-   }
-
    public String getTelephone()
    {
       return telephone;

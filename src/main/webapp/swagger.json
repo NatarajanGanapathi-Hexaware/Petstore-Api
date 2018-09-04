@@ -665,9 +665,6 @@
         },
         "homeAddress" : {
           "$ref" : "#/definitions/Address"
-        },
-        "fullName" : {
-          "type" : "string"
         }
       }
     },
