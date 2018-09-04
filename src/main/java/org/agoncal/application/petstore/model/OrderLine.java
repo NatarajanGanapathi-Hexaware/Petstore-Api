@@ -49,10 +49,10 @@ public class OrderLine implements Serializable
    // = Business methods =
    // ======================================
 
-   public Float getSubTotal()
-   {
-      return item.getUnitCost() * quantity;
-   }
+//    public Float getSubTotal()
+//    {
+//       return item.getUnitCost() * quantity;
+//    }
 
    // ======================================
    // = Getters & setters =
