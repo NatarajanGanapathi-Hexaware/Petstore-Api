@@ -9,7 +9,7 @@ pipeline {
   stages {
     stage('Test') {
       steps {
-        bat 'docker --version'
+        bat(script: 'docker --version', returnStatus: true, returnStdout: true)
       }
     }
   }
