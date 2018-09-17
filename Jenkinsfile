@@ -8,8 +8,17 @@ pipeline {
   }
   stages {
     stage('Test') {
-      steps {
-        bat(script: 'docker --version', returnStatus: true, returnStdout: true)
+      parallel {
+        stage('Test') {
+          steps {
+            bat(script: 'docker --version', returnStatus: true, returnStdout: true)
+          }
+        }
+        stage('Demo') {
+          steps {
+            bat(script: 'node --version', returnStdout: true, returnStatus: true)
+          }
+        }
       }
     }
   }
