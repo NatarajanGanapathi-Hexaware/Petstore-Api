@@ -1,17 +1,53 @@
-FROM microsoft/nanoserver 
-# FROM microsoft/windowsservercore  
-# RUN powershell (new-object System.Net.WebClient).Downloadfile('http://javadl.oracle.com/webapps/download/AutoDL?BundleId=210185', 'C:\jre-8u91-windows-x64.exe')
-# RUN powershell start-process -filepath C:\jre-8u91-windows-x64.exe -passthru -wait -argumentlist "/s,INSTALLDIR=c:\Java\jre1.8.0_91,/L,install64.log"
-# RUN del C:\jre-8u91-windows-x64.exe
+FROM microsoft/windowsservercore  
 
-ENV JAVA_HOME=C:/Java/
+ENV JBOSS_HOME C:\wildfly-11.0.0.Final
+ENV POSTGRESQL_VERSION 9.4-1201-jdbc41
+ENV JAVA_HOME=C:\Java\jre1.8.0_91
 
-RUN mkdir Java
-COPY ["./jdk1.8.0_172", "/Java/"]
-COPY ["./wildfly", "/wildfly/"]
+ARG DB_HOST=postgresql
+ARG DB_NAME=postgresdb
+ARG DB_USER=postgres
+ARG DB_PASS=irtt
+
+# COPY /JavaInstallConfig.txt JavaInstallConfig.txt
+# Install JAVA
+# RUN powershell (new-object System.Net.WebClient).Downloadfile('http://download.oracle.com/otn-pub/java/jdk/8u181-b13/96a7b8442fe848ef90c96a2fad6ed6d1/jdk-8u181-windows-x64.exe', 'C:\jdk-8u181-windows-x64.exe')
+# RUN powershell start-process -filepath C:\jdk-8u181-windows-x64.exe -passthru -wait -argumentlist "/s,INSTALLDIR=c:\Java\jdk-8u181,/L,install64.log"
+# RUN powershell start-process C:\jdk-8u181-windows-x64.exe INSTALLCFG=C:\JavaInstallConfig.txt -Wait
+# RUN del C:\jdk-8u181-windows-x64.exe
+# start-process $FullFilePath INSTALLCFG=$FileDirectory/JavaInstallConfig.txt -Wait
+
+RUN powershell (new-object System.Net.WebClient).Downloadfile('http://javadl.oracle.com/webapps/download/AutoDL?BundleId=210185', 'C:\jre-8u91-windows-x64.exe')
+RUN powershell start-process -filepath C:\jre-8u91-windows-x64.exe -passthru -wait -argumentlist "/s,INSTALLDIR=c:\Java\jre1.8.0_91,/L,install64.log"
+RUN del C:\jre-8u91-windows-x64.exe
+
+# Install Wildfly Server
+RUN powershell (new-object System.Net.WebClient).Downloadfile('http://download.jboss.org/wildfly/11.0.0.Final/wildfly-11.0.0.Final.zip', 'C:\wildfly-11.0.0.Final.zip')
+RUN powershell Expand-Archive -Path "C:\wildfly-11.0.0.Final.zip" -DestinationPath "C:\\"
+RUN del C:\wildfly-11.0.0.Final.zip
+
+# Add Wildfly User
+
+RUN powershell '$JBOSS_HOME\bin\add-user.bat admin password  --silent'
+
+# Postgres DB Driver setup.
+
+RUN powershell '$JBOSS_HOME\bin\standalone.bat' 
+RUN powershell 'sleep 10'
+RUN powershell 'cd /tmp'
+RUN powershell 'curl --location --output postgresql-${POSTGRESQL_VERSION}.jar --url http://search.maven.org/remotecontent?filepath=org/postgresql/postgresql/${POSTGRESQL_VERSION}/postgresql-${POSTGRESQL_VERSION}.jar'
+RUN powershell '$JBOSS_HOME\bin\jboss-cli.bat --connect --command="data-source remove --name=ExampleDS"'
+RUN powershell  '$JBOSS_HOME\bin\jboss-cli.bat --connect --command="deploy /tmp/postgresql-${POSTGRESQL_VERSION}.jar"' 
+RUN powershell  '$JBOSS_HOME\bin\jboss-cli.bat --connect --command="xa-data-source add --name=ExampleDS --jndi-name=java:jboss/datasources/ExampleDS --user-name=${DB_USER} --password=${DB_PASS} --driver-name=postgresql-9.4-1201-jdbc41.jar --xa-datasource-class=org.postgresql.xa.PGXADataSource --xa-datasource-properties=ServerName=${DB_HOST},PortNumber=5432,DatabaseName=${DB_NAME} --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter"' 
+RUN powershell  '$JBOSS_HOME\bin\jboss-cli.bat --connect --command=:shutdown' 
+RUN powershell  'rm -rf $JBOSS_HOME\standalone\configuration\standalone_xml_history\ $JBOSS_HOME\standalone\log\*' 
+RUN powershell  'rm /tmp/postgresql-9.4*.jar' 
+RUN powershell  'rm -rf /tmp/postgresql-*.jar' 
+
 EXPOSE 9990
 EXPOSE 8080
-CMD ["C:/wildfly/bin/standalone.bat", "-b", "0.0.0.0", "-bmanagement", "0.0.0.0"]
+
+CMD ["C:\wildfly-11.0.0.Final\bin\standalone.bat", "-b", "0.0.0.0", "-bmanagement", "0.0.0.0"]
 
 # Build
 # Docker build -f Dockerfile.win -t petstore-api:latest .
