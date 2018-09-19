@@ -1,0 +1,20 @@
+FROM microsoft/nanoserver 
+# FROM microsoft/windowsservercore  
+# RUN powershell (new-object System.Net.WebClient).Downloadfile('http://javadl.oracle.com/webapps/download/AutoDL?BundleId=210185', 'C:\jre-8u91-windows-x64.exe')
+# RUN powershell start-process -filepath C:\jre-8u91-windows-x64.exe -passthru -wait -argumentlist "/s,INSTALLDIR=c:\Java\jre1.8.0_91,/L,install64.log"
+# RUN del C:\jre-8u91-windows-x64.exe
+
+ENV JAVA_HOME=C:/Java/
+
+RUN mkdir Java
+COPY ["./jdk1.8.0_172", "/Java/"]
+COPY ["./wildfly", "/wildfly/"]
+EXPOSE 9990
+EXPOSE 8080
+CMD ["C:/wildfly/bin/standalone.bat", "-b", "0.0.0.0", "-bmanagement", "0.0.0.0"]
+
+# Build
+# Docker build -f Dockerfile.win -t petstore-api:latest .
+
+#Run
+# Docker run -it -p 9994:9990 -p 8084:8080 --rm -d petstore-api:1.0.0
