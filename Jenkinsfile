@@ -6,9 +6,9 @@ pipeline {
 
   }
   stages {
-    stage('Test') {
+    stage('Build') {
       steps {
-        bat(script: 'docker --version', returnStatus: true, returnStdout: true)
+        echo 'Demo Success'
       }
     }
   }
